@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 明暗跟随系统的窗口底色（启动首帧用，运行期由 Compose 绘制） -->
+    <color name="app_background">#F2F5F9</color>
+
+    <color name="primary">#00E5FF</color>
+    <color name="primary_dark">#00B0FF</color>
+    <color name="accent">#00E5FF</color>
+    <color name="background_dark">#12161A</color>
+    <color name="surface_dark">#1A1F26</color>
+    <color name="card_dark">#222832</color>
+    <color name="text_primary">#F0F6FC</color>
+    <color name="text_secondary">#8B949E</color>
+
+    <!-- Adaptive icon 背景层：取自插画的暖奶油主色（hoodie #E8C8A8 / 高光 #F0E8E0）之间 -->
+    <color name="ic_launcher_background">#F7E9D7</color>
+</resources>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Network & LAN Discovery Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <!-- Foreground Service & Notifications (Android 13/14+) -->
+    <!-- 注意：不要声明 dataSync 类型。Android 15+ 对 dataSync 前台服务有每 24 小时
+         6 小时的硬性额度，超时会调用 Service.onTimeout() 并强杀应用。局域网 P2P
+         同步属于「与外部设备交互」，用 connectedDevice | specialUse 即可，
+         这两个类型都没有时间限制。 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Android 9 及以下写公共 Download 目录需要；Q+ 走 MediaStore 不需要 -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <application
+        android:name=".MuClipApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MuClip">
+
+        <!-- Main Compose Activity -->
+        <activity
+            android:name=".activity.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Transparent Trampoline Activity for Focus-Gaining Clipboard Access -->
+        <!-- Theme.MuClip.Translucent ensures zero visual visibility, no animation, no recents -->
+        <activity
+            android:name=".activity.ClipboardActionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MuClip.Translucent"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="" />
+
+        <!-- Foreground Service for Continuous mDNS Discovery & E2EE Sync -->
+        <service
+            android:name=".service.ClipboardSyncService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="connectedDevice|specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="lan_p2p_clipboard_and_device_sync" />
+        </service>
+
+        <!-- Accessibility Service for true background clipboard monitoring -->
+        <service
+            android:name=".service.MuClipAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="@string/accessibility_service_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- FileProvider for safely opening and sharing downloaded files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

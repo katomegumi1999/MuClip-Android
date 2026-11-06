@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">小沐剪贴板</string>
+    <string name="sync_service_channel_name">剪贴板同步前台服务</string>
+    <string name="sync_service_channel_desc">用于在后台保持局域网设备自发现及端到端加密剪贴板传输</string>
+    <string name="sync_alert_channel_name">跨设备同步到达提醒</string>
+    <string name="sync_alert_channel_desc">当接收到来自其他设备同步的内容时弹出快捷复制通知</string>
+    <string name="notification_title">小沐剪贴板 跨设备剪贴板同步已就绪</string>
+    <string name="notification_content">点击或使用快捷动作同步当前剪贴板</string>
+    <string name="action_sync_now">同步剪贴板</string>
+    <string name="action_open_app">打开面板</string>
+    <string name="action_exit_app">退出</string>
+    <string name="action_pair_now">输入 PIN 确认</string>
+    <string name="pairing_alert_channel_name">设备配对请求</string>
+    <string name="pairing_alert_channel_desc">收到来自局域网其他设备的配对请求通知</string>
+    <string name="tab_clipboard">剪贴板</string>
+    <string name="tab_phrases">常用语</string>
+    <string name="tab_devices">配对设备</string>
+    <string name="tab_settings">设置</string>
+    <string name="accessibility_service_name">小沐剪贴板 后台自动剪贴板同步服务</string>
+    <string name="accessibility_service_description">开启后，小沐剪贴板 可在后台自动读取并同步最新复制的剪贴板内容至已配对设备，无需每次手动打开应用。</string>
+</resources>
