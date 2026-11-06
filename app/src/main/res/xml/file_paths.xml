@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="public_external" path="." />
-    <external-files-path name="download_files" path="Download/" />
-    <external-files-path name="all_external_files" path="." />
-    <cache-path name="cache_files" path="." />
+
+    <!-- 接收文件的落盘位置：公共「下载/MuClip」。
+         这里刻意只声明 Download/ 子树，不再使用 path="." ——
+         path="." 等于把整个外部存储交给 FileProvider，
+         一旦某处路径拼接出错就会暴露任意外部文件。 -->
+    <external-path
+        name="public_download"
+        path="Download/" />
+
+    <!-- 应用私有外部目录（Android/data/<pkg>/files），其他应用默认无法访问 -->
+    <external-files-path
+        name="app_external_files"
+        path="." />
+
+    <!-- 应用私有缓存，分享前生成临时副本时使用 -->
+    <cache-path
+        name="cache_files"
+        path="." />
+
 </paths>

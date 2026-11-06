@@ -103,7 +103,16 @@ class FileTransferViewModel : ViewModel() {
             val uri: Uri = try {
                 FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
             } catch (e: Exception) {
-                Uri.fromFile(file)
+                // 不要回退到 Uri.fromFile：targetSdk 24+ 把它交给 startActivity 会抛
+                // FileUriExposedException，等于把「拿不到 content:// URI」升级成一次崩溃。
+                // 走到这里说明文件不在 FileProvider 声明的路径内（见 res/xml/file_paths.xml），
+                // 直接告诉用户文件实际在哪。
+                Toast.makeText(
+                    context,
+                    "无法打开该文件，请到「下载/MuClip」目录手动查看",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
             }
 
             // 1. 优先调用安卓系统 ContentResolver 自动识别该 Uri 的真实 MIME 类型

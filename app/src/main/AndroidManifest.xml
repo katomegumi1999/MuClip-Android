@@ -28,12 +28,20 @@
 
     <application
         android:name=".MuClipApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MuClip">
+
+        <!-- allowBackup 刻意关闭：
+             SQLCipher 数据库的 raw key 由 LocalDbKey 生成后放在 AndroidKeyStore 里，
+             而 KeyStore 的内容**不参与**系统备份（云备份与 adb backup 都不带）。
+             若开启备份，用户换机恢复后会得到一个「有加密库、没有密钥」的状态：
+             库文件在，但打不开，且应用会把它当作损坏库处理。
+             需要迁移数据请走设置页的「加密备份 (.mubc)」，那条路径的口令与本地库密钥
+             完全独立，是有意设计成可携带的。 -->
 
         <!-- Main Compose Activity -->
         <activity

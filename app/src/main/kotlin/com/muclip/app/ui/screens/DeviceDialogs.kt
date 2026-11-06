@@ -1,5 +1,8 @@
 package com.muclip.app.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,14 +35,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -80,7 +82,13 @@ internal fun IncomingPairRequestDialog(
     onReject: () -> Unit
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    // 用原生 ClipboardManager 而不是已弃用的 LocalClipboardManager：
+    // 新版 Compose Clipboard API 是 suspend 的，而这两处都是同步点击回调，
+    // 为一次复制/粘贴引入协程作用域不划算。onClick 发生在前台且有焦点，
+    // 不受 Android 10+ 后台剪贴板读取限制影响。
+    val clipboardManager = remember(context) {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
     val haptics = LocalHapticFeedback.current
 
     AlertDialog(
@@ -115,7 +123,13 @@ internal fun IncomingPairRequestDialog(
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
                         IconButton(onClick = {
-                            val clipText = clipboardManager.getText()?.text?.trim()?.filter { it.isDigit() }
+                            val clipText = clipboardManager.primaryClip
+                                ?.takeIf { it.itemCount > 0 }
+                                ?.getItemAt(0)
+                                ?.coerceToText(context)
+                                ?.toString()
+                                ?.trim()
+                                ?.filter { it.isDigit() }
                             if (!clipText.isNullOrEmpty()) {
                                 onPinInputChange(clipText.take(6))
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -168,7 +182,13 @@ internal fun OutboundPairingDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    // 用原生 ClipboardManager 而不是已弃用的 LocalClipboardManager：
+    // 新版 Compose Clipboard API 是 suspend 的，而这两处都是同步点击回调，
+    // 为一次复制/粘贴引入协程作用域不划算。onClick 发生在前台且有焦点，
+    // 不受 Android 10+ 后台剪贴板读取限制影响。
+    val clipboardManager = remember(context) {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
     val haptics = LocalHapticFeedback.current
 
     AlertDialog(
@@ -224,7 +244,9 @@ internal fun OutboundPairingDialog(
                             .border(1.5.dp, MuClipPrimary, RoundedCornerShape(12.dp))
                             .clickable {
                                 if (state.generatedPin.isNotEmpty()) {
-                                    clipboardManager.setText(AnnotatedString(state.generatedPin))
+                                    clipboardManager.setPrimaryClip(
+                                        ClipData.newPlainText("MuClip 配对 PIN", state.generatedPin)
+                                    )
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     Toast.makeText(context, "已复制配对 PIN 码: ${state.generatedPin}", Toast.LENGTH_SHORT).show()
                                 }
