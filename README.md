@@ -224,14 +224,16 @@ Rust 侧通过 `GetMethodID` 按**字符串方法名**解析回调目标，而 `
 
 ## 贡献
 
-改动前的硬性要求、代码约定、跨平台同步注意事项见核心仓库的 [`CONTRIBUTING.md`](https://github.com/katomegumi1999/MuClip/blob/main/CONTRIBUTING.md)。
+本仓库特有的硬性约束（JNI 回调、后台剪贴板不变量、FileProvider 范围、需要补测试的改动）见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
-针对本仓库的补充：
+跨仓库的通用规约（提交信息、分支、代码约定）见核心仓库的 [`CONTRIBUTING.md`](https://github.com/katomegumi1999/MuClip/blob/main/CONTRIBUTING.md)。
 
 ```bash
-./gradlew.bat test        # 单元测试
-./gradlew.bat assembleRelease   # 必须能通过，含 R8 混淆
+./gradlew.bat assembleDebug assembleRelease test      # Windows
+./gradlew assembleDebug assembleRelease test          # Linux / macOS
 ```
+
+三条都要过，且构建输出里不应出现新的 `w:` 警告。**`assembleRelease` 不是可选项** —— 只有它才触发 R8，JNI 反射边界的问题在那里暴露。
 
 改了 `core/` 下的 JNI 桥接或 Rust 核心后，**两端都要重新编译**（Windows `muclip_core.dll` + Android `libmuclip_core.so`），否则客户端之间会跑在不同协议版本上。
 
@@ -241,7 +243,11 @@ Rust 侧通过 `GetMethodID` 按**字符串方法名**解析回调目标，而 `
 
 **不要用公开 issue 报告安全问题。** 请使用 GitHub 的 Private vulnerability reporting（仓库 Settings → Security → Advisories），或在该仓库的 issue 里只写「有安全问题需私下沟通」，不要贴细节。
 
-攻击面分析与已知边界见核心仓库的 [`SECURITY.md`](https://github.com/katomegumi1999/MuClip/blob/main/SECURITY.md)。
+Android 侧的攻击面与已知边界（无障碍服务、后台剪贴板落地、FileProvider、明文版构建）见 [`SECURITY.md`](SECURITY.md)；协议与加密实现的安全边界见核心仓库的 [`SECURITY.md`](https://github.com/katomegumi1999/MuClip/blob/main/SECURITY.md)。
+
+## 版本
+
+版本变更记录见 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## 许可证
 

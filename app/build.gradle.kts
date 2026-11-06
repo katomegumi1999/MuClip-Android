@@ -1,7 +1,32 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+// ============================================================================
+// Release 签名
+//
+// 仓库里不含任何签名密钥。签名材料从 rootProject 下的 keystore.properties 读取
+// （该文件已在 .gitignore 中），CI 侧用 Gradle Secrets 注入同名属性。
+//
+// 为什么不用 debug.keystore 签 release：
+//   ① debug key 是公开的（密码固定为 android），任何人拿到都能伪造「官方更新」；
+//   ② 一旦用它分发过，将来换成正式密钥时签名不一致，老用户必须先卸载才能安装；
+//   ③ 开源仓库里出现共享私钥是评审红旗。
+//
+// 文件不存在时回退 debug 签名 —— 保证任何人 clone 后都能构建、能本地验证，
+// 但这样产出的包只能自用，不能分发。
+// ============================================================================
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.inputStream().use { load(it) }
+    }
+}
+val releaseStoreFile = keystoreProps.getProperty("storeFile")?.let { rootProject.file(it) }
+val hasReleaseSigning = releaseStoreFile?.exists() == true
 
 android {
     namespace = "com.muclip.app"
@@ -11,8 +36,8 @@ android {
         applicationId = "com.muclip.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 8
-        versionName = "0.1.7"
+        versionCode = 9
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -26,13 +51,12 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            val debugKeyStore = file("${System.getProperty("user.home")}/.android/debug.keystore")
-            if (debugKeyStore.exists()) {
-                storeFile = debugKeyStore
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
             }
         }
     }
@@ -45,8 +69,7 @@ android {
             // 开启后需要 proguard-rules.pro 保留 JNI 回调方法名，见该文件注释。
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
-                ?: signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -85,9 +108,15 @@ android {
     compileSdkMinor = 2
 }
 
-tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-    enabled = false
-}
+// 注意：这里曾经有过
+//   tasks.matching { it.name.contains("AarMetadata") }.configureEach { enabled = false }
+// 用来绕过依赖的 minCompileSdk / minAgpVersion 校验。全局关掉元数据校验等于拆掉
+// 依赖兼容性警报器：AGP 与 AAR 的要求不匹配时，构建会一路通过，然后在运行时或
+// 下一次升级时才以更难排查的方式爆出来。compileSdk 37 已经能满足当前全部依赖，
+// 该绕过已无必要，故移除。
+//
+// 若将来升依赖时确实被 AarMetadata 拦下，正确处理是提高 compileSdk 或降级那个依赖，
+// 而不是重新关掉这项校验。
 
 dependencies {
     // AndroidX & Core

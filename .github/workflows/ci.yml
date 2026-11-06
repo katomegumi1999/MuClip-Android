@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK (required for stripping native libraries)
+        run: sdkmanager "ndk;29.0.14206865"
+
+      # 仓库不收录 libmuclip_core.so（见 .gitignore），但 JNI 的 external fun
+      # 在**编译期**并不需要真实符号，只有运行时才需要。因此这里放一个空占位，
+      # 让 Kotlin 编译、R8 混淆、资源压缩、APK 打包全链路都被真实执行。
+      #
+      # 代价要说清楚：产出的 APK 不可运行，strip 也会因为不是合法 ELF 而报警告
+      # （不影响构建成功）。这个 job 验证的是「能构建」，不是「能发布」。
+      # 需要可运行产物请按 README 自行编译核心库。
+      - name: Placeholder native library
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          : > app/src/main/jniLibs/arm64-v8a/libmuclip_core.so
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Unit tests
+        run: ./gradlew test --no-daemon
+
+      - name: Assemble debug
+        run: ./gradlew assembleDebug --no-daemon
+
+      # release 才是触发 R8 + 资源压缩的那条路径。JNI 回调方法名、反射边界、
+      # ProGuard 规则的问题只在这里暴露，所以不能只跑 debug。
+      - name: Assemble release (R8)
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Verify no native binaries were committed
+        # 预编译动态库与发布包不应进入仓库（.gitignore 已排除）。这条用于兜底
+        # `git add -f` 之类绕过忽略规则的误提交。
+        run: |
+          leaked=$(git ls-files | grep -iE '\.(so|apk|a|jks|keystore)$' || true)
+          if [ -n "$leaked" ]; then
+            echo "::error::以下二进制/密钥文件不应被提交："
+            echo "$leaked"
+            exit 1
+          fi
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-ci-build
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn
+          retention-days: 7
