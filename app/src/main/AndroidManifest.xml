@@ -21,6 +21,15 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- 安装接收到的 APK。
+         Android 8.0（API 26）起，调用方没有声明这个权限时，系统安装器会直接
+         拒绝这次启动 —— 表现为「点了没反应 / 打不开」，而不是抛异常，所以很难
+         从日志里看出来。这是普通权限，安装应用时自动授予，不需要运行时申请；
+         但用户仍需在系统设置里为本应用单独打开「安装未知应用」，那一步由
+         FileTransferViewModel.openApkInstaller 检测并引导。
+         注意：该权限在 Google Play 上属于敏感权限，本项目不做商店分发（见 README）。 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Android 9 及以下写公共 Download 目录需要；Q+ 走 MediaStore 不需要 -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"

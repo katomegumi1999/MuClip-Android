@@ -203,6 +203,7 @@ Rust 侧通过 `GetMethodID` 按**字符串方法名**解析回调目标，而 `
 | `FOREGROUND_SERVICE` 系列 | 常驻同步服务 |
 | `POST_NOTIFICATIONS` | 同步结果与配对请求通知 |
 | `WAKE_LOCK` / `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | 防止休眠时断连 |
+| `REQUEST_INSTALL_PACKAGES` | 安装接收到的 APK。Android 8.0+ 起，没有这个声明时系统安装器会直接拒绝启动（表现是「点了打不开」）。用户仍需在系统设置里为本应用单独打开「安装未知应用」 |
 | 无障碍服务（**可选，默认关闭**） | 在后台自动检测复制动作，免去每次手动打开应用 |
 
 - **没有账号，没有遥测，没有云服务器。** 数据只在你的设备之间点对点传输。

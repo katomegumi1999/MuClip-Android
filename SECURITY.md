@@ -28,6 +28,7 @@ MuClip Android 会读取剪贴板、接收文件、并（可选地）开启无�
 | **后台剪贴板落地** | 后台收到推送只写 SQLite 并缓存到 `SyncEventManager.pendingClipboardWrite`（进程内存），回到前台才写系统剪贴板 | 待写内容在写入系统剪贴板前一直驻留进程内存；同进程被注入或 root 环境可直接读取 |
 | **接收文件落盘** | 写入公共「下载/MuClip」，通过 `MediaScannerConnection` 刷新媒体库 | 公共目录下的文件对拥有存储权限的应用可读。加密保护只在**传输链路**，落盘即明文 |
 | **FileProvider** | `exported="false"`，仅通过 `FLAG_GRANT_READ_URI_PERMISSION` 按次授权；路径限定为 `Download/` 与应用私有目录 | 分享出去的文件在目标应用持有的 Uri 生命周期内可被其读取 |
+| **APK 安装引导**（`REQUEST_INSTALL_PACKAGES`） | 只在用户点击「打开」一个**接收到的** .apk 时生效；未授予「安装未知应用」时只跳设置页，不做任何静默动作 | 该权限让本应用具备引导安装任意 APK 的能力。若对端设备已被控制，攻击者可以推一个恶意 APK 过来等你点。系统安装界面会列出所请求的权限并要求确认，但人往往直接点「安装」。**不要把本应用用在你不信任的对端上** |
 | **系统备份** | `allowBackup="false"` | 用户无法通过系统备份迁移数据，需走应用内的 `.mubc` 加密备份 |
 | **本地数据库** | SQLCipher（可选 feature），32 字节 raw key 由 `LocalDbKey` 生成并存入 AndroidKeyStore（TEE 保护） | 明文版构建（plain feature）下历史记录以明文 SQLite 落盘，设置页会标注「明文」；root 环境可读 TEE 之外的密钥材料 |
 | **配对 PIN** | 走 SPAKE2，PIN 不上线；key 由配对派生 | 6 位 PIN 在无速率限制的场景下可离线枚举（同核心仓库的协议局限） |

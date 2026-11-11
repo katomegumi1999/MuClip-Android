@@ -3,6 +3,20 @@
 版本号格式 `主版本.次版本.修订号`，对应 `app/build.gradle.kts` 里的 `versionName` / `versionCode`。
 每次交付 APK 必须同时递增两者 —— 否则装机后无法从系统设置里确认到底跑的是哪一版。
 
+## [0.2.1] - 2026-11-11
+
+`versionCode` 10。
+
+### 修复
+
+- **接收到的 APK 无法打开。** 根因是 `AndroidManifest.xml` 没有声明 `REQUEST_INSTALL_PACKAGES`。
+  Android 8.0 起，调用方缺这个声明时系统安装器会**直接拒绝启动**，既不抛异常也没有
+  明显的日志痕迹，表现出来就是「点了没反应」。
+  同时把 APK 从 `createChooser` 流程里分离出来，直接走 `ACTION_VIEW` —— 套一层
+  chooser 会被系统当成「选一个应用打开」的普通流程，部分 ROM 上根本列不出安装器。
+  另外补了 `PackageManager.canRequestPackageInstalls()` 检测：用户没为本应用打开
+  「安装未知应用」时，直接引导到对应设置页，而不是静默失败。
+
 ## [0.2.0] - 2026-11-06
 
 首个开源版本。`versionCode` 9。

@@ -36,8 +36,8 @@ android {
         applicationId = "com.muclip.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 9
-        versionName = "0.2.0"
+        versionCode = 10
+        versionName = "0.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
